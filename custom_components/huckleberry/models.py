@@ -79,6 +79,8 @@ class HuckleberryChildState:
     health_status: FirebaseHealthDocumentData | None = None
     diaper_status: FirebaseDiaperDocumentData | None = None
     child_document: FirebaseChildDocument | None = None
+    bottle_total_today_ml: float | None = None
+    bottle_total_today_count: int = 0
 
     @property
     def growth_data(self) -> FirebaseGrowthData | None:

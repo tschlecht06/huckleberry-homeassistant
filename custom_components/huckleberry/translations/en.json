@@ -207,6 +207,10 @@
           "name": "Child device",
           "description": "Select child device"
         },
+        "start_time": {
+          "name": "Start time",
+          "description": "When this entry occurred (defaults to now if omitted)"
+        },
         "pee_amount": {
           "name": "Pee amount",
           "description": "Amount of pee (shows indicator in app)"
@@ -228,6 +232,10 @@
         "device_id": {
           "name": "Child device",
           "description": "Select child device"
+        },
+        "start_time": {
+          "name": "Start time",
+          "description": "When this entry occurred (defaults to now if omitted)"
         },
         "poo_amount": {
           "name": "Poo amount",
@@ -258,6 +266,10 @@
         "device_id": {
           "name": "Child device",
           "description": "Select child device"
+        },
+        "start_time": {
+          "name": "Start time",
+          "description": "When this entry occurred (defaults to now if omitted)"
         },
         "pee_amount": {
           "name": "Pee amount",
@@ -292,6 +304,10 @@
         "device_id": {
           "name": "Child device",
           "description": "Select child device"
+        },
+        "start_time": {
+          "name": "Start time",
+          "description": "When this entry occurred (defaults to now if omitted)"
         },
         "diaper_rash": {
           "name": "Diaper rash",
@@ -336,6 +352,10 @@
         "device_id": {
           "name": "Child device",
           "description": "Select child device"
+        },
+        "start_time": {
+          "name": "Start time",
+          "description": "When this entry occurred (defaults to now if omitted)"
         },
         "amount": {
           "name": "Amount",
@@ -493,6 +513,14 @@
           },
           "type": {
             "name": "Type"
+          }
+        }
+      },
+      "bottle_total_today": {
+        "name": "Bottle total today",
+        "state_attributes": {
+          "entries": {
+            "name": "Entries"
           }
         }
       },

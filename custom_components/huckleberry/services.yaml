@@ -160,6 +160,12 @@ log_diaper_pee:
       selector:
         device:
           integration: huckleberry
+    start_time:
+      name: Start Time
+      description: When this entry occurred (defaults to now if omitted)
+      required: false
+      selector:
+        datetime:
     pee_amount:
       name: Pee amount
       description: Amount of pee (shows indicator in app)
@@ -196,6 +202,12 @@ log_diaper_poo:
       selector:
         device:
           integration: huckleberry
+    start_time:
+      name: Start Time
+      description: When this entry occurred (defaults to now if omitted)
+      required: false
+      selector:
+        datetime:
     poo_amount:
       name: Poo amount
       description: Amount of poo (shows indicator in app)
@@ -261,6 +273,12 @@ log_diaper_both:
       selector:
         device:
           integration: huckleberry
+    start_time:
+      name: Start Time
+      description: When this entry occurred (defaults to now if omitted)
+      required: false
+      selector:
+        datetime:
     pee_amount:
       name: Pee amount
       description: Amount of pee (shows indicator in app)
@@ -337,6 +355,12 @@ log_diaper_dry:
       selector:
         device:
           integration: huckleberry
+    start_time:
+      name: Start Time
+      description: When this entry occurred (defaults to now if omitted)
+      required: false
+      selector:
+        datetime:
     diaper_rash:
       name: Diaper rash
       description: Baby has diaper rash
@@ -418,6 +442,12 @@ log_bottle:
       selector:
         device:
           integration: huckleberry
+    start_time:
+      name: Start Time
+      description: When this entry occurred (defaults to now if omitted)
+      required: false
+      selector:
+        datetime:
     amount:
       name: Amount
       description: Amount of bottle feeding (in oz or ml)
