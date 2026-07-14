@@ -13,6 +13,7 @@ from .const import DOMAIN
 from .features.bottle import build_bottle_sensors
 from .features.child import build_child_sensors
 from .features.diaper import build_diaper_sensors
+from .features.feed_reminder import build_feed_reminder_sensors
 from .features.growth import build_growth_sensors
 from .features.nursing import build_nursing_sensors
 from .features.sleep import build_sleep_sensors
@@ -34,6 +35,7 @@ async def async_setup_entry(
     entities.extend(build_nursing_sensors(entry_data["coordinator"], entry_data["children"]))
     entities.extend(build_sleep_sensors(entry_data["coordinator"], entry_data["children"]))
     entities.extend(build_sweetspot_sensors(entry_data["coordinator"], entry_data["children"]))
+    entities.extend(build_feed_reminder_sensors(entry_data["coordinator"], entry_data["children"]))
 
     async_add_entities(entities)
 
