@@ -524,6 +524,30 @@
           }
         }
       },
+      "feed_reminder": {
+        "name": "Feed reminder",
+        "state": {
+          "at": "At specific times",
+          "in": "Interval"
+        },
+        "state_attributes": {
+          "interval_enabled": {
+            "name": "Interval enabled"
+          },
+          "interval_value_raw": {
+            "name": "Interval value (raw)"
+          },
+          "interval_daytime_only": {
+            "name": "Interval daytime only"
+          },
+          "interval_days": {
+            "name": "Interval days"
+          },
+          "at_times_raw": {
+            "name": "At times (raw)"
+          }
+        }
+      },
       "diaper": {
         "name": "Diaper",
         "state_attributes": {
