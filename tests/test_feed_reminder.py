@@ -110,7 +110,7 @@ async def test_feed_reminder_exposes_raw_at_times(hass: HomeAssistant, mock_huck
 
 async def test_feed_reminder_no_attributes_when_unset(hass: HomeAssistant, mock_huckleberry_api):
     """No reminder configured means no state and no attributes, not an error."""
-    entry = await _setup_entry_with_enabled_sensor(hass, mock_huckleberry_api)
+    await _setup_entry_with_enabled_sensor(hass, mock_huckleberry_api)
 
     state = hass.states.get("sensor.test_child_feed_reminder")
     assert state is not None
