@@ -1,7 +1,9 @@
 """Test Huckleberry services."""
+from datetime import datetime
 from unittest.mock import ANY, patch
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.helpers import device_registry as dr
+from homeassistant.util import dt as dt_util
 from custom_components.huckleberry.const import DOMAIN
 from homeassistant.core import HomeAssistant
 from pytest_homeassistant_custom_component.common import MockConfigEntry
@@ -196,6 +198,133 @@ async def test_services(hass: HomeAssistant, mock_huckleberry_api):
         bottle_type="Breast Milk",
         units="ml",
     )
+
+async def test_log_bottle_with_explicit_start_time_forwards_it(hass: HomeAssistant, mock_huckleberry_api):
+    """An explicit start_time should be forwarded instead of "now"."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_EMAIL: "test@example.com",
+            CONF_PASSWORD: "test_password",
+        },
+    )
+    entry.add_to_hass(hass)
+
+    with patch(
+        "custom_components.huckleberry.HuckleberryAPI",
+        return_value=mock_huckleberry_api,
+    ):
+        await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+    device_registry = dr.async_get(hass)
+    device = device_registry.async_get_or_create(
+        config_entry_id=entry.entry_id,
+        identifiers={(DOMAIN, "test_child_uid")},
+        name="Test Child"
+    )
+
+    await hass.services.async_call(
+        DOMAIN,
+        "log_bottle",
+        {
+            "device_id": device.id,
+            "amount": 100.0,
+            "bottle_type": "formula",
+            "units": "ml",
+            "start_time": "2026-01-01 08:00:00",
+        },
+        blocking=True,
+    )
+    mock_huckleberry_api.log_bottle.assert_called_with(
+        "test_child_uid",
+        start_time=dt_util.as_local(datetime(2026, 1, 1, 8, 0, 0)),
+        amount=100.0,
+        bottle_type="Formula",
+        units="ml",
+    )
+
+
+async def test_log_diaper_pee_with_explicit_start_time_forwards_it(hass: HomeAssistant, mock_huckleberry_api):
+    """An explicit start_time should be forwarded instead of "now" for diaper services too."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_EMAIL: "test@example.com",
+            CONF_PASSWORD: "test_password",
+        },
+    )
+    entry.add_to_hass(hass)
+
+    with patch(
+        "custom_components.huckleberry.HuckleberryAPI",
+        return_value=mock_huckleberry_api,
+    ):
+        await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+    device_registry = dr.async_get(hass)
+    device = device_registry.async_get_or_create(
+        config_entry_id=entry.entry_id,
+        identifiers={(DOMAIN, "test_child_uid")},
+        name="Test Child"
+    )
+
+    await hass.services.async_call(
+        DOMAIN,
+        "log_diaper_pee",
+        {"device_id": device.id, "start_time": "2026-01-01 08:00:00"},
+        blocking=True,
+    )
+    mock_huckleberry_api.log_diaper.assert_called_with(
+        "test_child_uid",
+        start_time=dt_util.as_local(datetime(2026, 1, 1, 8, 0, 0)),
+        mode="pee",
+        pee_amount=None,
+        diaper_rash=False,
+        notes=None,
+    )
+
+
+async def test_log_bottle_without_start_time_still_defaults_to_now(hass: HomeAssistant, mock_huckleberry_api):
+    """Omitting start_time keeps the existing "logs as now" behavior."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_EMAIL: "test@example.com",
+            CONF_PASSWORD: "test_password",
+        },
+    )
+    entry.add_to_hass(hass)
+
+    with patch(
+        "custom_components.huckleberry.HuckleberryAPI",
+        return_value=mock_huckleberry_api,
+    ):
+        await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+    device_registry = dr.async_get(hass)
+    device = device_registry.async_get_or_create(
+        config_entry_id=entry.entry_id,
+        identifiers={(DOMAIN, "test_child_uid")},
+        name="Test Child"
+    )
+
+    await hass.services.async_call(
+        DOMAIN,
+        "log_bottle",
+        {"device_id": device.id, "amount": 100.0, "bottle_type": "formula", "units": "ml"},
+        blocking=True,
+    )
+    mock_huckleberry_api.log_bottle.assert_called_with(
+        "test_child_uid",
+        start_time=ANY,
+        amount=100.0,
+        bottle_type="Formula",
+        units="ml",
+    )
+
 
 async def test_service_no_target_raises(hass: HomeAssistant, mock_huckleberry_api):
     """Test that calling a service without device_id raises an error."""

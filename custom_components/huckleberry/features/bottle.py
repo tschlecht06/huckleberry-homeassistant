@@ -14,7 +14,11 @@ def build_bottle_sensors(
     children: list[HuckleberryChildProfile],
 ) -> list[SensorEntity]:
     """Build bottle-related sensors."""
-    return [HuckleberryBottleSensor(coordinator, child) for child in children]
+    sensors: list[SensorEntity] = []
+    for child in children:
+        sensors.append(HuckleberryBottleSensor(coordinator, child))
+        sensors.append(HuckleberryBottleTotalTodaySensor(coordinator, child))
+    return sensors
 
 
 class HuckleberryBottleSensor(HuckleberryBaseEntity, SensorEntity):
@@ -57,3 +61,27 @@ class HuckleberryBottleSensor(HuckleberryBaseEntity, SensorEntity):
             attributes["type"] = last_bottle.bottleType.title()
 
         return attributes
+
+
+class HuckleberryBottleTotalTodaySensor(HuckleberryBaseEntity, SensorEntity):
+    """Sensor showing the total bottle volume logged today, normalized to mL."""
+
+    _attr_icon = "mdi:baby-bottle-outline"
+    _attr_native_unit_of_measurement = "mL"
+    _attr_suggested_display_precision = 0
+    _attr_translation_key = "bottle_total_today"
+
+    def __init__(self, coordinator: HuckleberryDataUpdateCoordinator, child: HuckleberryChildProfile) -> None:
+        super().__init__(coordinator, child)
+        self._attr_unique_id = f"{self.child_uid}_bottle_total_today"
+
+    @property
+    def native_value(self) -> float | None:
+        """Return today's total bottle volume in mL."""
+        total_ml = self.coordinator.get_bottle_total_today_ml(self.child_uid)
+        return round(total_ml, 1) if total_ml is not None else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, object]:
+        """Return the number of bottle feeds counted in today's total."""
+        return {"entries": self.coordinator.get_bottle_total_today_count(self.child_uid)}

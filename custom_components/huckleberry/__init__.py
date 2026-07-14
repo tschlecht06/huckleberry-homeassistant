@@ -4,7 +4,7 @@ from __future__ import annotations
 import asyncio
 import inspect
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Final, Literal, TypedDict, cast, get_args
 
 import voluptuous as vol
@@ -24,6 +24,7 @@ from huckleberry_api import HuckleberryAPI
 from huckleberry_api.firebase_types import (
     BottleType,
     FeedSide,
+    FirebaseBottleFeedIntervalData,
     FirebaseChildDocument,
     FirebaseDiaperDocumentData,
     FirebaseFeedDocumentData,
@@ -64,6 +65,9 @@ BOTTLE_TYPE_LEGACY_OPTIONS: Final[tuple[str, ...]] = tuple(get_args(BottleType))
 DiaperAmount = Literal["little", "medium", "big"]
 GrowthUnits = Literal["metric", "imperial"]
 BottleUnits = Literal["ml", "oz"]
+# US customary fluid ounce to milliliter — used to normalize today's bottle
+# total to a single unit regardless of what each entry was logged in.
+ML_PER_FLUID_OUNCE: Final = 29.5735
 
 
 class HuckleberryEntryData(TypedDict):
@@ -173,6 +177,19 @@ def _string_value(value: object) -> str | None:
     return value if isinstance(value, str) else None
 
 
+def _resolved_start_time(call: ServiceCall) -> datetime:
+    """Return the caller-supplied start_time (localized) or the current time.
+
+    The `start_time` field is validated by `cv.datetime`, which may return a
+    naive datetime when the frontend's datetime selector omits a timezone —
+    `dt_util.as_local` normalizes that the same way the rest of HA does.
+    """
+    start_time = call.data.get("start_time")
+    if start_time is None:
+        return dt_util.now()
+    return dt_util.as_local(start_time)
+
+
 def _feed_side_value(value: object, *, default: FeedSide | None = None) -> FeedSide | None:
     """Return a validated feed-side literal from service data."""
     string_value = _string_value(value)
@@ -229,12 +246,15 @@ def _build_service_method_schema(
     include_growth: bool = False,
     include_bottle: bool = False,
     include_diaper_fields: bool = False,
+    include_start_time: bool = False,
 ) -> vol.Schema:
     """Create a service schema from the shared target fields."""
     schema: dict[object, object] = {
         vol.Required(CONF_DEVICE_ID): cv.string,
     }
 
+    if include_start_time:
+        schema[vol.Optional("start_time")] = cv.datetime
     if include_side:
         schema[vol.Optional("side")] = vol.In(FEED_SIDE_OPTIONS)
     if include_growth:
@@ -347,7 +367,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     async def handle_log_diaper_pee(call: ServiceCall) -> None:
         await api_client.log_diaper(
             _target_child(call),
-            start_time=dt_util.now(),
+            start_time=_resolved_start_time(call),
             mode="pee",
             pee_amount=_diaper_amount_value(call.data.get("pee_amount")),
             diaper_rash=bool(call.data.get("diaper_rash", False)),
@@ -357,7 +377,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     async def handle_log_diaper_poo(call: ServiceCall) -> None:
         await api_client.log_diaper(
             _target_child(call),
-            start_time=dt_util.now(),
+            start_time=_resolved_start_time(call),
             mode="poo",
             poo_amount=_diaper_amount_value(call.data.get("poo_amount")),
             color=_poo_color_value(call.data.get("color")),
@@ -369,7 +389,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     async def handle_log_diaper_both(call: ServiceCall) -> None:
         await api_client.log_diaper(
             _target_child(call),
-            start_time=dt_util.now(),
+            start_time=_resolved_start_time(call),
             mode="both",
             pee_amount=_diaper_amount_value(call.data.get("pee_amount")),
             poo_amount=_diaper_amount_value(call.data.get("poo_amount")),
@@ -382,7 +402,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     async def handle_log_diaper_dry(call: ServiceCall) -> None:
         await api_client.log_diaper(
             _target_child(call),
-            start_time=dt_util.now(),
+            start_time=_resolved_start_time(call),
             mode="dry",
             diaper_rash=bool(call.data.get("diaper_rash", False)),
             notes=_string_value(call.data.get("notes")),
@@ -402,7 +422,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     async def handle_log_bottle(call: ServiceCall) -> None:
         await api_client.log_bottle(
             _target_child(call),
-            start_time=dt_util.now(),
+            start_time=_resolved_start_time(call),
             amount=cast(float, call.data["amount"]),
             bottle_type=_api_bottle_type(_string_value(call.data.get("bottle_type"))),
             units=_bottle_units_value(call.data.get("units")),
@@ -422,7 +442,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.services.async_register(DOMAIN, "cancel_nursing", handle_cancel_nursing, schema=SERVICE_CHILD_SCHEMA)
     hass.services.async_register(DOMAIN, "complete_nursing", handle_complete_nursing, schema=SERVICE_CHILD_SCHEMA)
 
-    diaper_schema = _build_service_method_schema(include_diaper_fields=True)
+    diaper_schema = _build_service_method_schema(include_diaper_fields=True, include_start_time=True)
     hass.services.async_register(DOMAIN, "log_diaper_pee", handle_log_diaper_pee, schema=diaper_schema)
     hass.services.async_register(DOMAIN, "log_diaper_poo", handle_log_diaper_poo, schema=diaper_schema)
     hass.services.async_register(DOMAIN, "log_diaper_both", handle_log_diaper_both, schema=diaper_schema)
@@ -438,7 +458,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         DOMAIN,
         "log_bottle",
         handle_log_bottle,
-        schema=_build_service_method_schema(include_bottle=True),
+        schema=_build_service_method_schema(include_bottle=True, include_start_time=True),
     )
 
     return True
@@ -512,7 +532,42 @@ class HuckleberryDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Huckleber
     async def _async_update_data(self) -> dict[str, HuckleberryChildState]:
         """Refresh auth/session state while listeners provide live data."""
         await self.api.ensure_session()
+        await self._async_refresh_bottle_totals_today()
         return dict(self._realtime_data)
+
+    async def _async_refresh_bottle_totals_today(self) -> None:
+        """Refresh each child's total bottle volume logged so far today.
+
+        Real-time listeners only carry the most recent bottle entry, not a running
+        daily total, so this queries the interval history (the same API the
+        calendar platform uses) once per coordinator refresh instead.
+        """
+        now = dt_util.now()
+        start_of_day = dt_util.start_of_local_day(now)
+        results = await asyncio.gather(
+            *(self.api.list_feed_intervals(child.uid, start_of_day, now) for child in self.children),
+            return_exceptions=True,
+        )
+        for child, result in zip(self.children, results, strict=True):
+            if isinstance(result, BaseException):
+                _LOGGER.warning(
+                    "Failed to refresh today's bottle total for %s: %s", child.uid, result
+                )
+                continue
+
+            total_ml = 0.0
+            count = 0
+            for interval in result:
+                if not isinstance(interval, FirebaseBottleFeedIntervalData):
+                    continue
+                if interval.amount is None:
+                    continue
+                units = (interval.units or "ml").lower()
+                total_ml += interval.amount * ML_PER_FLUID_OUNCE if units == "oz" else interval.amount
+                count += 1
+
+            self._realtime_data[child.uid].bottle_total_today_ml = total_ml
+            self._realtime_data[child.uid].bottle_total_today_count = count
 
     async def async_shutdown(self) -> None:
         """Shutdown coordinator and stop active listeners."""
@@ -547,6 +602,16 @@ class HuckleberryDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Huckleber
         """Return the current child document for a child."""
         state = self.get_state(child_uid)
         return state.child_document if state is not None else None
+
+    def get_bottle_total_today_ml(self, child_uid: str) -> float | None:
+        """Return today's total bottle volume in mL for a child."""
+        state = self.get_state(child_uid)
+        return state.bottle_total_today_ml if state is not None else None
+
+    def get_bottle_total_today_count(self, child_uid: str) -> int:
+        """Return the number of bottle feeds logged today for a child."""
+        state = self.get_state(child_uid)
+        return state.bottle_total_today_count if state is not None else 0
 
 async def _async_close_api_firestore_clients(api: HuckleberryAPI) -> None:
     """Close Firestore transports held by the API client.

@@ -52,6 +52,7 @@ This integration provides real-time baby tracking in Home Assistant by connectin
   - `sensor.{child_name}_profile` - Child profile information
   - `sensor.{child_name}_growth` - Latest growth measurements
   - `sensor.{child_name}_bottle` - Last bottle feeding (time, amount, type)
+  - `sensor.{child_name}_bottle_total_today` - Total bottle volume logged today, in mL (`entries` attribute shows the count)
   - `sensor.{child_name}_diaper` - Last diaper change
 
 - **Switches** (3):
@@ -92,6 +93,8 @@ All services support device selection for easy use in automations:
 - `huckleberry.log_diaper_poo`
 - `huckleberry.log_diaper_both`
 - `huckleberry.log_diaper_dry`
+
+`log_bottle` and all `log_diaper_*` services accept an optional `start_time` field to backdate an entry (e.g. logging a feed a few minutes after it happened). Omit it and the entry logs as "now", same as before.
 
 ### Growth Tracking
 - `huckleberry.log_growth`

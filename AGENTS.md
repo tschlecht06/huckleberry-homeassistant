@@ -223,23 +223,28 @@ All services support device selector for easy automation creation.
 
 ### Diaper Services
 
+All `log_diaper_*` services accept an optional `start_time` field (datetime selector) to
+backdate an entry; omitted, they log as `dt_util.now()` same as before. See
+`_resolved_start_time()` in `__init__.py`, which localizes a caller-supplied value via
+`dt_util.as_local()` (the datetime selector can hand back a naive local string).
+
 **`huckleberry.log_diaper_pee`**:
 - Logs a pee-only diaper change
-- Parameters: `device_id` (optional), `child_uid` (optional)
+- Parameters: `device_id` (optional), `child_uid` (optional), `start_time` (optional)
 
 **`huckleberry.log_diaper_poo`**:
 - Logs a poo-only diaper change
-- Parameters: `device_id` (optional), `child_uid` (optional), `color` (optional), `consistency` (optional)
+- Parameters: `device_id` (optional), `child_uid` (optional), `start_time` (optional), `color` (optional), `consistency` (optional)
 - Color options: yellow, green, brown, black, red
 - Consistency options: runny, soft, solid, hard
 
 **`huckleberry.log_diaper_both`**:
 - Logs a diaper change with both pee and poo
-- Parameters: `device_id` (optional), `child_uid` (optional), `color` (optional), `consistency` (optional)
+- Parameters: `device_id` (optional), `child_uid` (optional), `start_time` (optional), `color` (optional), `consistency` (optional)
 
 **`huckleberry.log_diaper_dry`**:
 - Logs a dry diaper check (no change needed)
-- Parameters: `device_id` (optional), `child_uid` (optional)
+- Parameters: `device_id` (optional), `child_uid` (optional), `start_time` (optional)
 
 ### Growth Service
 
@@ -247,6 +252,12 @@ All services support device selector for easy automation creation.
 - Logs growth measurements
 - Parameters: `device_id` (optional), `child_uid` (optional), `weight` (optional), `weight_units` (kg/lbs), `height` (optional), `height_units` (cm/in), `head` (optional), `head_units` (hcm/hin)
 - At least one measurement (weight, height, or head) is required
+
+### Bottle Service
+
+**`huckleberry.log_bottle`**:
+- Logs a bottle feeding
+- Parameters: `device_id` (required), `amount` (required), `bottle_type` (required: formula, breast_milk, tube_feeding, cow_milk, goat_milk, soy_milk, other), `units` (optional, default `ml`), `start_time` (optional — defaults to now, see Diaper Services above for the same mechanism)
 
 ## Critical Implementation Rules
 
@@ -877,9 +888,10 @@ Follow [semver.org](https://semver.org/):
 
 ---
 
-**Last Updated**: December 15, 2025
-**Integration Version**: 0.2.7
-**API Library Version**: 0.1.19
-**Status**: Stable, feature-complete for sleep, feeding, diaper, and growth tracking
+**Last Updated**: July 13, 2026
+**Integration Version**: 0.5.0
+**API Library Version**: 0.4.3
+**Status**: Stable, feature-complete for sleep, feeding, diaper, and growth tracking; added a
+today's-bottle-total sensor and optional `start_time` backdating on `log_bottle`/`log_diaper_*`
 **Home Assistant Compatibility**: 2023.1+
 **Test Coverage**: Automated test suite covering config flow, entities, services, and device actions
