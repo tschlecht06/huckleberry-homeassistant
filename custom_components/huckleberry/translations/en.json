@@ -548,6 +548,17 @@
           }
         }
       },
+      "next_feed_due": {
+        "name": "Next feed due",
+        "state_attributes": {
+          "reminder_mode": {
+            "name": "Reminder mode"
+          },
+          "interval_minutes": {
+            "name": "Interval (minutes)"
+          }
+        }
+      },
       "diaper": {
         "name": "Diaper",
         "state_attributes": {

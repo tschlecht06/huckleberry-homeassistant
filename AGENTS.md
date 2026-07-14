@@ -889,11 +889,13 @@ Follow [semver.org](https://semver.org/):
 ---
 
 **Last Updated**: July 14, 2026
-**Integration Version**: 0.6.0
+**Integration Version**: 0.7.0
 **API Library Version**: 0.4.3
 **Status**: Stable, feature-complete for sleep, feeding, diaper, and growth tracking; added a
-today's-bottle-total sensor, optional `start_time` backdating on `log_bottle`/`log_diaper_*`, and
-a disabled-by-default `feed_reminder` diagnostic sensor exposing the raw `reminderV2` schedule
-(interval/at-times config) — raw values only, units not yet confirmed against real account data
+today's-bottle-total sensor, optional `start_time` backdating on `log_bottle`/`log_diaper_*`, a
+disabled-by-default `feed_reminder` diagnostic sensor exposing the raw `reminderV2` schedule, and
+a `next_feed_due` sensor computing the predicted next feed from the interval reminder (confirmed:
+`inReminder.value` is in minutes — a value of 180 matched a real "every 3 hours" reminder). "At
+specific times" mode isn't predicted yet — its raw units aren't independently confirmed.
 **Home Assistant Compatibility**: 2023.1+
 **Test Coverage**: Automated test suite covering config flow, entities, services, and device actions

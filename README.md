@@ -55,6 +55,7 @@ This integration provides real-time baby tracking in Home Assistant by connectin
   - `sensor.{child_name}_bottle_total_today` - Total bottle volume logged today, in mL (`entries` attribute shows the count)
   - `sensor.{child_name}_diaper` - Last diaper change
   - `sensor.{child_name}_feed_reminder` - *(diagnostic, disabled by default)* Raw feeding reminder schedule (`"at"` specific times or `"in"` interval mode) from the Huckleberry app. Attribute values are passed through unmodified — the app's raw units for interval/time values aren't documented, so nothing here is interpreted as minutes/hours yet.
+  - `sensor.{child_name}_next_feed_due` - Predicted next feed time, from the last bottle/nursing time plus the configured "every N" interval reminder (confirmed: the reminder's raw value is in minutes). Only interval-mode reminders are predicted — "at specific times" mode isn't computed yet (see `feed_reminder` above).
 
 - **Switches** (3):
   - `switch.{child_name}_sleep_timer` - Start/stop the sleep timer
